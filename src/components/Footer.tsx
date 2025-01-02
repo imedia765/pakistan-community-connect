@@ -2,15 +2,10 @@ import React from "react";
 
 export const Footer = () => {
   return (
-    <footer className="bg-primary text-white py-8">
+    <footer className="bg-[#1a1f2c] text-gray-300 py-4 border-t border-gray-800">
       <div className="container mx-auto px-4">
         <div className="text-center">
-          <p className="mb-4">
-            © 2024 Pakistan Welfare Association, Burton Upon Trent. All rights reserved.
-          </p>
-          <p className="text-sm">
-            Website developed and maintained by SmartFIX Tech
-          </p>
+          <p>© 2024 SmartFIX Tech, Burton Upon Trent. All rights reserved.</p>
         </div>
       </div>
     </footer>
