@@ -46,7 +46,7 @@ const PaymentCard = ({
     if (isBefore(today, dueDateObj)) {
       return {
         color: 'text-blue-400',
-        message: 'Due: January 1st, 2025',
+        message: `Due: ${formatDate(dueDate)}`,
         warning: null
       };
     } else if (isBefore(today, twentyEightDaysAfterDue)) {
