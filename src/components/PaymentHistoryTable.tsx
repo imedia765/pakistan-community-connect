@@ -64,7 +64,7 @@ const PaymentHistoryTable = () => {
         throw new Error('Member number not found');
       }
 
-      // Fetch payment requests
+      // Fetch payment requests with explicit member number check
       const { data, error: paymentsError } = await supabase
         .from('payment_requests')
         .select('*')
@@ -73,6 +73,11 @@ const PaymentHistoryTable = () => {
 
       if (paymentsError) {
         console.error('Error fetching payment requests:', paymentsError);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch payment history",
+        });
         throw paymentsError;
       }
 
@@ -80,9 +85,10 @@ const PaymentHistoryTable = () => {
 
       if (!data || data.length === 0) {
         console.log('No payment records found for member:', memberNumber);
+        return [];
       }
 
-      // Transform the data
+      // Transform and validate the data
       return data.map(payment => ({
         id: payment.id,
         date: payment.created_at,
@@ -92,6 +98,10 @@ const PaymentHistoryTable = () => {
       }));
     },
     retry: 1,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    meta: {
+      errorMessage: "Failed to load payment history"
+    }
   });
 
   if (isLoading) {
