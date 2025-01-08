@@ -6,6 +6,7 @@ import MonthlyChart from './MonthlyChart';
 import PaymentCard from './PaymentCard';
 import PaymentHistoryTable from './PaymentHistoryTable';
 import { Users, Wallet, AlertCircle } from 'lucide-react';
+import { Card } from './ui/card';
 
 const DashboardView = () => {
   const { toast } = useToast();
@@ -82,7 +83,7 @@ const DashboardView = () => {
         emergencyPending,
         totalEmergencyAmount,
         collectedEmergencyAmount,
-        totalYearlyAmount: totalMembers * 40, // £40 per member
+        totalYearlyAmount: totalMembers * 40,
         collectedYearlyAmount: (totalMembers - yearlyPending) * 40
       };
     }
@@ -108,6 +109,22 @@ const DashboardView = () => {
           annualPaymentDueDate={memberProfile?.yearly_payment_due_date}
           emergencyCollectionDueDate={memberProfile?.emergency_collection_due_date}
         />
+
+        <Card className="p-6 bg-dashboard-card border-dashboard-cardBorder">
+          <h3 className="text-xl font-semibold mb-4 text-white">Medical Examiner Process</h3>
+          <p className="text-dashboard-text mb-4">
+            To understand our comprehensive Medical Examiner Death Certification process, please review our detailed Medical Examiner Flow Chart.
+          </p>
+          <p className="text-dashboard-text mb-4">
+            This flow chart provides a step-by-step guide to the death certification process, ensuring transparency and clarity for all members.
+          </p>
+          <a 
+            href="/flowchart" 
+            className="inline-block px-4 py-2 bg-dashboard-accent1 text-white rounded-md hover:bg-opacity-90 transition-opacity"
+          >
+            View Flow Chart
+          </a>
+        </Card>
 
         <MonthlyChart />
 
