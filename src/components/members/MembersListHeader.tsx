@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Printer } from "lucide-react";
 import { useState } from "react";
 import EditProfileDialog from "./EditProfileDialog";
 import { Member } from "@/types/member";
+import PrintButtons from "@/components/PrintButtons";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MembersListHeaderProps {
   userRole: string | null;
@@ -15,7 +17,6 @@ interface MembersListHeaderProps {
 
 const MembersListHeader = ({ 
   userRole, 
-  onPrint, 
   hasMembers, 
   collectorInfo,
   selectedMember,
@@ -23,18 +24,38 @@ const MembersListHeader = ({
 }: MembersListHeaderProps) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
+  // Fetch members for the current collector
+  const { data: collectorMembers } = useQuery({
+    queryKey: ['collector_members', collectorInfo?.name],
+    queryFn: async () => {
+      if (!collectorInfo?.name) return [];
+      
+      console.log('Fetching members for collector:', collectorInfo.name);
+      const { data, error } = await supabase
+        .from('members')
+        .select('*')
+        .eq('collector', collectorInfo.name)
+        .order('member_number', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching collector members:', error);
+        throw error;
+      }
+
+      return data || [];
+    },
+    enabled: !!collectorInfo?.name
+  });
+
   if (userRole !== 'collector' || !hasMembers) return null;
 
   return (
     <>
       <div className="flex justify-end mb-4 gap-2">
-        <Button
-          onClick={onPrint}
-          className="flex items-center gap-2 bg-dashboard-accent1 hover:bg-dashboard-accent1/80"
-        >
-          <Printer className="w-4 h-4" />
-          Print Members List
-        </Button>
+        <PrintButtons 
+          collectorName={collectorInfo?.name || ''}
+          allMembers={collectorMembers}
+        />
       </div>
 
       {selectedMember && (
