@@ -43,6 +43,22 @@ const MemberProfileCard = ({ memberProfile }: MemberProfileCardProps) => {
     enabled: !!memberProfile?.collector
   });
 
+  const { data: familyMembers } = useQuery({
+    queryKey: ['familyMembers', memberProfile?.id],
+    queryFn: async () => {
+      if (!memberProfile?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('family_members')
+        .select('*')
+        .eq('member_id', memberProfile.id);
+        
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!memberProfile?.id
+  });
+
   if (!memberProfile) {
     return (
       <Card className="bg-dashboard-card border-white/10 shadow-lg">
@@ -57,7 +73,6 @@ const MemberProfileCard = ({ memberProfile }: MemberProfileCardProps) => {
   }
 
   const handleProfileUpdated = () => {
-    // Trigger a refresh of the profile data
     window.location.reload();
   };
 
@@ -101,10 +116,10 @@ const MemberProfileCard = ({ memberProfile }: MemberProfileCardProps) => {
                   userRole={userRole}
                 />
                 
-                {/* Family Member Section */}
+                {/* Family Members Section */}
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <h3 className="text-dashboard-muted text-sm">Family Member</h3>
+                    <h3 className="text-dashboard-muted text-sm">Family Members</h3>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -115,12 +130,18 @@ const MemberProfileCard = ({ memberProfile }: MemberProfileCardProps) => {
                       Add Family Member
                     </Button>
                   </div>
-                  <FamilyMemberCard
-                    name={memberProfile.family_member_name}
-                    relationship={memberProfile.family_member_relationship}
-                    dob={memberProfile.family_member_dob?.toString() || null}
-                    gender={memberProfile.family_member_gender}
-                  />
+                  <div className="space-y-2">
+                    {familyMembers?.map((familyMember) => (
+                      <FamilyMemberCard
+                        key={familyMember.id}
+                        name={familyMember.full_name}
+                        relationship={familyMember.relationship}
+                        dob={familyMember.date_of_birth?.toString() || null}
+                        gender={familyMember.gender}
+                        memberNumber={familyMember.member_number}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

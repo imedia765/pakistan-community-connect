@@ -90,6 +90,50 @@ export type Database = {
         }
         Relationships: []
       }
+      family_members: {
+        Row: {
+          created_at: string
+          date_of_birth: string | null
+          full_name: string
+          gender: string | null
+          id: string
+          member_id: string
+          member_number: string
+          relationship: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_of_birth?: string | null
+          full_name: string
+          gender?: string | null
+          id?: string
+          member_id: string
+          member_number: string
+          relationship: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_of_birth?: string | null
+          full_name?: string
+          gender?: string | null
+          id?: string
+          member_id?: string
+          member_number?: string
+          relationship?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_members_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       git_operations_logs: {
         Row: {
           created_at: string | null
@@ -549,6 +593,12 @@ export type Database = {
           status: string
           details: Json
         }[]
+      }
+      generate_family_member_number: {
+        Args: {
+          parent_member_number: string
+        }
+        Returns: string
       }
       generate_full_backup: {
         Args: Record<PropertyKey, never>

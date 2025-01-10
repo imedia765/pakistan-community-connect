@@ -6,9 +6,10 @@ interface FamilyMemberCardProps {
   relationship: string | null;
   dob: string | null;
   gender: string | null;
+  memberNumber: string | null;
 }
 
-const FamilyMemberCard = ({ name, relationship, dob, gender }: FamilyMemberCardProps) => {
+const FamilyMemberCard = ({ name, relationship, dob, gender, memberNumber }: FamilyMemberCardProps) => {
   if (!name && !relationship && !dob && !gender) {
     return null;
   }
@@ -26,6 +27,12 @@ const FamilyMemberCard = ({ name, relationship, dob, gender }: FamilyMemberCardP
           </h3>
           
           <div className="space-y-1 text-sm text-gray-600">
+            {memberNumber && (
+              <p>
+                <span className="font-medium">Member Number:</span> {memberNumber}
+              </p>
+            )}
+            
             {relationship && (
               <p>
                 <span className="font-medium">Relationship:</span> {relationship}
