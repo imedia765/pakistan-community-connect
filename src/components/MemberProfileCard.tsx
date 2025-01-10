@@ -7,7 +7,7 @@ import AddressDetails from "./profile/AddressDetails";
 import MembershipDetails from "./profile/MembershipDetails";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
 import { Button } from "@/components/ui/button";
-import { Edit, CreditCard } from "lucide-react";
+import { Edit, CreditCard, UserPlus } from "lucide-react";
 import EditProfileDialog from "./members/EditProfileDialog";
 import PaymentDialog from "./members/PaymentDialog";
 import { useState } from "react";
@@ -102,7 +102,18 @@ const MemberProfileCard = ({ memberProfile }: MemberProfileCardProps) => {
                 
                 {/* Family Member Section */}
                 <div className="space-y-2">
-                  <h3 className="text-dashboard-muted text-sm">Family Member</h3>
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-dashboard-muted text-sm">Family Member</h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-dashboard-accent2 hover:text-dashboard-accent2/80 hover:bg-dashboard-accent2/10"
+                      onClick={() => setShowEditDialog(true)}
+                    >
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Add Family Member
+                    </Button>
+                  </div>
                   <FamilyMemberCard
                     name={memberProfile.family_member_name}
                     relationship={memberProfile.family_member_relationship}
