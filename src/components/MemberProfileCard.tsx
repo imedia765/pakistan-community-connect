@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Edit, CreditCard, UserPlus } from "lucide-react";
 import EditProfileDialog from "./members/EditProfileDialog";
 import PaymentDialog from "./members/PaymentDialog";
+import AddFamilyMemberDialog from "./members/AddFamilyMemberDialog";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,8 +24,8 @@ const MemberProfileCard = ({ memberProfile }: MemberProfileCardProps) => {
   const { userRole } = useRoleAccess();
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [showAddFamilyDialog, setShowAddFamilyDialog] = useState(false);
 
-  // Query to get collector info
   const { data: collectorInfo } = useQuery({
     queryKey: ['collectorInfo', memberProfile?.collector],
     queryFn: async () => {
@@ -108,7 +109,7 @@ const MemberProfileCard = ({ memberProfile }: MemberProfileCardProps) => {
                       variant="ghost"
                       size="sm"
                       className="text-dashboard-accent2 hover:text-dashboard-accent2/80 hover:bg-dashboard-accent2/10"
-                      onClick={() => setShowEditDialog(true)}
+                      onClick={() => setShowAddFamilyDialog(true)}
                     >
                       <UserPlus className="w-4 h-4 mr-2" />
                       Add Family Member
@@ -144,6 +145,13 @@ const MemberProfileCard = ({ memberProfile }: MemberProfileCardProps) => {
           collectorInfo={collectorInfo}
         />
       )}
+
+      <AddFamilyMemberDialog
+        member={memberProfile}
+        open={showAddFamilyDialog}
+        onOpenChange={setShowAddFamilyDialog}
+        onFamilyMemberAdded={handleProfileUpdated}
+      />
     </Card>
   );
 };
