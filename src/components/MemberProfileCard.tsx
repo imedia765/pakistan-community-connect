@@ -13,6 +13,7 @@ import PaymentDialog from "./members/PaymentDialog";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import FamilyMemberCard from "./members/FamilyMemberCard";
 
 interface MemberProfileCardProps {
   memberProfile: Member | null;
@@ -98,6 +99,17 @@ const MemberProfileCard = ({ memberProfile }: MemberProfileCardProps) => {
                   memberProfile={memberProfile}
                   userRole={userRole}
                 />
+                
+                {/* Family Member Section */}
+                <div className="space-y-2">
+                  <h3 className="text-dashboard-muted text-sm">Family Member</h3>
+                  <FamilyMemberCard
+                    name={memberProfile.family_member_name}
+                    relationship={memberProfile.family_member_relationship}
+                    dob={memberProfile.family_member_dob?.toString() || null}
+                    gender={memberProfile.family_member_gender}
+                  />
+                </div>
               </div>
             </div>
           </div>
