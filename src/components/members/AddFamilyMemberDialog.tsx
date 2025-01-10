@@ -30,6 +30,7 @@ const AddFamilyMemberDialog = ({ member, open, onOpenChange, onFamilyMemberAdded
         .from('family_members')
         .insert({
           member_id: member.id,
+          member_number: null, // This will trigger the database function to generate the number
           full_name: formData.full_name,
           relationship: formData.relationship,
           date_of_birth: formData.date_of_birth,
