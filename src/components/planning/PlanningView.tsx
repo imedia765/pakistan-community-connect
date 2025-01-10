@@ -37,7 +37,27 @@ const PlanningView = () => {
         .order('member_number');
 
       if (error) throw error;
-      return data as PlanningData[];
+
+      // Transform the data to match PlanningData interface
+      const transformedData: PlanningData[] = data.map(member => ({
+        member_number: member.member_number,
+        full_name: member.full_name,
+        status: member.status,
+        collector: member.collector,
+        yearly_payment_amount: member.yearly_payment_amount,
+        yearly_payment_status: member.yearly_payment_status,
+        yearly_payment_due_date: member.yearly_payment_due_date,
+        emergency_collection_amount: member.emergency_collection_amount,
+        emergency_collection_status: member.emergency_collection_status,
+        emergency_collection_due_date: member.emergency_collection_due_date,
+        payment_amount: member.payment_amount,
+        payment_type: member.payment_type,
+        payment_date: member.payment_date,
+        collector_name: member.members_collectors?.[0]?.name || null,
+        collector_phone: member.members_collectors?.[0]?.phone || null
+      }));
+
+      return transformedData;
     },
   });
 
