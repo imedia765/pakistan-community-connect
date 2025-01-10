@@ -3,10 +3,10 @@ import { Printer } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { generateMembersPDF, generateCollectorZip } from '@/utils/pdfGenerator';
+import PDFGenerationProgress from "./PDFGenerationProgress";
 import { Database } from '@/integrations/supabase/types';
 import { supabase } from "@/integrations/supabase/client";
-import ExportButtons from "./print/ExportButtons";
-import PrintProgress from "./print/PrintProgress";
+import DownloadButtons from "./print/DownloadButtons";
 
 type Member = Database['public']['Tables']['members']['Row'];
 
@@ -125,9 +125,9 @@ const PrintButtons = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       {isGenerating && (
-        <PrintProgress 
+        <PDFGenerationProgress 
           current={progress.current}
           total={progress.total}
           currentCollector={progress.collector}
@@ -135,38 +135,28 @@ const PrintButtons = ({
       )}
       
       {collectorName ? (
-        <div className="flex gap-2">
+        <div className="flex w-full gap-2">
           <Button
             onClick={() => handlePrintCollector(collectorName)}
-            className="bg-gradient-to-r from-dashboard-accent1 to-dashboard-accent2 hover:from-dashboard-accent1/90 hover:to-dashboard-accent2/90 text-white shadow-lg"
+            className="flex-1 items-center gap-2 bg-dashboard-accent2 hover:bg-dashboard-accent2/80"
             disabled={isGenerating}
           >
-            <Printer className="w-4 h-4 mr-2" />
+            <Printer className="w-4 h-4" />
             Print Members
           </Button>
-          {allMembers && allMembers.length > 0 && (
-            <ExportButtons 
-              allMembers={allMembers} 
-              collectorName={collectorName} 
-            />
-          )}
+          {allMembers && <DownloadButtons members={allMembers} collectorName={collectorName} className="flex-1" />}
         </div>
       ) : (
-        <div className="flex gap-2">
+        <div className="flex w-full gap-2">
           <Button 
             onClick={handlePrintAll}
-            className="bg-gradient-to-r from-dashboard-accent1 to-dashboard-accent2 hover:from-dashboard-accent1/90 hover:to-dashboard-accent2/90 text-white shadow-lg"
+            className="flex-1 items-center gap-2 bg-dashboard-accent1 hover:bg-dashboard-accent1/80"
             disabled={isGenerating}
           >
-            <Printer className="w-4 h-4 mr-2" />
+            <Printer className="w-4 h-4" />
             {isGenerating ? 'Generating...' : 'Print All Members'}
           </Button>
-          {allMembers && allMembers.length > 0 && (
-            <ExportButtons 
-              allMembers={allMembers} 
-              collectorName={collectorName} 
-            />
-          )}
+          {allMembers && <DownloadButtons members={allMembers} className="flex-1" />}
         </div>
       )}
     </div>

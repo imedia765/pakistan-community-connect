@@ -1,10 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import EditProfileDialog from "./EditProfileDialog";
 import { Member } from "@/types/member";
-import PrintButtons from "@/components/PrintButtons";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import EditProfileDialog from "./EditProfileDialog";
+import { useState } from "react";
+import PrintButtons from "../PrintButtons";
 
 interface MembersListHeaderProps {
   userRole: string | null;
@@ -13,6 +10,7 @@ interface MembersListHeaderProps {
   collectorInfo?: { name: string } | null;
   selectedMember: Member | null;
   onProfileUpdated: () => void;
+  members?: Member[];
 }
 
 const MembersListHeader = ({ 
@@ -20,41 +18,21 @@ const MembersListHeader = ({
   hasMembers, 
   collectorInfo,
   selectedMember,
-  onProfileUpdated
+  onProfileUpdated,
+  members = []
 }: MembersListHeaderProps) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  // Fetch members for the current collector
-  const { data: collectorMembers } = useQuery({
-    queryKey: ['collector_members', collectorInfo?.name],
-    queryFn: async () => {
-      if (!collectorInfo?.name) return [];
-      
-      console.log('Fetching members for collector:', collectorInfo.name);
-      const { data, error } = await supabase
-        .from('members')
-        .select('*')
-        .eq('collector', collectorInfo.name)
-        .order('member_number', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching collector members:', error);
-        throw error;
-      }
-
-      return data || [];
-    },
-    enabled: !!collectorInfo?.name
-  });
-
-  if (userRole !== 'collector' || !hasMembers) return null;
+  if (!hasMembers) return null;
 
   return (
     <>
-      <div className="flex justify-end mb-4 gap-2">
+      <div className="flex w-full mb-4">
         <PrintButtons 
-          collectorName={collectorInfo?.name || ''}
-          allMembers={collectorMembers}
+          allMembers={members}
+          collectorName={collectorInfo?.name}
+          onGenerateStart={() => console.log('Starting generation...')}
+          onGenerateComplete={() => console.log('Generation complete')}
         />
       </div>
 
