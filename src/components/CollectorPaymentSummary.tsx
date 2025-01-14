@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import { Loader2, Receipt, CreditCard, PoundSterling, Calendar } from "lucide-react";
+import { Loader2, Receipt, CreditCard, PoundSterling, Calendar, Users, Clock, AlertCircle } from "lucide-react";
 import { formatDate } from "@/lib/dateFormat";
 
 interface PaymentSummaryProps {
@@ -18,7 +18,6 @@ const CollectorPaymentSummary = ({ collectorName }: PaymentSummaryProps) => {
       
       console.log('Fetching payment stats for collector:', collectorName);
       
-      // Fetch members data
       const { data: members, error } = await supabase
         .from('members')
         .select(`
@@ -27,7 +26,10 @@ const CollectorPaymentSummary = ({ collectorName }: PaymentSummaryProps) => {
           yearly_payment_amount,
           emergency_collection_amount,
           yearly_payment_due_date,
-          payment_date
+          payment_date,
+          payment_type,
+          status,
+          created_at
         `)
         .eq('collector', collectorName);
       
@@ -36,7 +38,10 @@ const CollectorPaymentSummary = ({ collectorName }: PaymentSummaryProps) => {
         throw error;
       }
 
-      // Calculate payment statistics
+      const currentDate = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
       const stats = {
         totalMembers: members?.length || 0,
         yearlyPayments: {
@@ -51,6 +56,11 @@ const CollectorPaymentSummary = ({ collectorName }: PaymentSummaryProps) => {
               ? m.yearly_payment_due_date
               : earliest;
           }, null as string | null),
+          overdue: members?.filter(m => 
+            m.yearly_payment_due_date && 
+            new Date(m.yearly_payment_due_date) < currentDate && 
+            m.yearly_payment_status !== 'completed'
+          ).length || 0,
         },
         emergencyCollections: {
           completed: members?.filter(m => m.emergency_collection_status === 'completed').length || 0,
@@ -66,6 +76,17 @@ const CollectorPaymentSummary = ({ collectorName }: PaymentSummaryProps) => {
               ? m.payment_date
               : latest;
           }, null as string | null),
+          recentPayments: members?.filter(m => 
+            m.payment_date && 
+            new Date(m.payment_date) > thirtyDaysAgo
+          ).length || 0,
+        },
+        membershipStats: {
+          active: members?.filter(m => m.status === 'active').length || 0,
+          inactive: members?.filter(m => m.status === 'inactive').length || 0,
+          newMembers: members?.filter(m => 
+            new Date(m.created_at) > thirtyDaysAgo
+          ).length || 0,
         }
       };
 
@@ -98,83 +119,129 @@ const CollectorPaymentSummary = ({ collectorName }: PaymentSummaryProps) => {
   const remainingMembers = paymentStats.totalMembers - paymentStats.yearlyPayments.completed;
 
   return (
-    <Card className="glass-card p-6 mt-8">
-      <h3 className="text-xl font-medium text-white mb-6">Payment Collection Summary</h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="glass-card p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <CreditCard className="w-5 h-5 text-dashboard-accent1" />
-            <h4 className="text-dashboard-accent1 font-medium">Yearly Payments</h4>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-2xl font-bold text-white">
-                £{collectedYearlyAmount} / £{totalYearlyAmount}
-              </p>
-              <p className="text-sm text-dashboard-muted">Amount collected</p>
-              <p className="text-sm text-dashboard-warning font-medium mt-1">
-                {remainingMembers} {remainingMembers === 1 ? 'member' : 'members'} remaining
-              </p>
-              {paymentStats.yearlyPayments.nextDueDate && (
-                <p className="text-sm text-dashboard-accent2 mt-2">
-                  Next due: {formatDate(paymentStats.yearlyPayments.nextDueDate)}
+    <div className="space-y-6">
+      <Card className="glass-card p-6">
+        <h3 className="text-xl font-medium text-white mb-6">Payment Collection Summary</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="glass-card p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <CreditCard className="w-5 h-5 text-dashboard-accent1" />
+              <h4 className="text-dashboard-accent1 font-medium">Yearly Payments</h4>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-white">
+                  £{collectedYearlyAmount} / £{totalYearlyAmount}
                 </p>
-              )}
-            </div>
-            <div className="w-16 h-16">
-              <CircularProgressbar
-                value={yearlyPaymentPercentage}
-                text={`${yearlyPaymentPercentage}%`}
-                styles={buildStyles({
-                  textSize: '1.5rem',
-                  pathColor: '#4CAF50',
-                  textColor: '#4CAF50',
-                  trailColor: 'rgba(255,255,255,0.1)',
-                })}
-              />
+                <p className="text-sm text-dashboard-muted">Amount collected</p>
+                <p className="text-sm text-dashboard-warning font-medium mt-1">
+                  {remainingMembers} {remainingMembers === 1 ? 'member' : 'members'} remaining
+                </p>
+                {paymentStats.yearlyPayments.nextDueDate && (
+                  <p className="text-sm text-dashboard-accent2 mt-2">
+                    Next due: {formatDate(paymentStats.yearlyPayments.nextDueDate)}
+                  </p>
+                )}
+                <p className="text-sm text-red-400 mt-1">
+                  {paymentStats.yearlyPayments.overdue} overdue payments
+                </p>
+              </div>
+              <div className="w-16 h-16">
+                <CircularProgressbar
+                  value={yearlyPaymentPercentage}
+                  text={`${yearlyPaymentPercentage}%`}
+                  styles={buildStyles({
+                    textSize: '1.5rem',
+                    pathColor: '#4CAF50',
+                    textColor: '#4CAF50',
+                    trailColor: 'rgba(255,255,255,0.1)',
+                  })}
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="glass-card p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Receipt className="w-5 h-5 text-dashboard-accent2" />
-            <h4 className="text-dashboard-accent2 font-medium">Emergency Collections</h4>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-2xl font-bold text-white">
-                £{paymentStats.emergencyCollections.totalCollected}
-              </p>
-              <p className="text-sm text-dashboard-muted">Total collected</p>
-              <p className="text-sm text-dashboard-accent1 mt-1">
-                {paymentStats.emergencyCollections.completed}/{paymentStats.totalMembers} members paid
-              </p>
-              {paymentStats.recentActivity.lastPaymentDate && (
-                <p className="text-sm text-dashboard-accent2 mt-2">
-                  Last payment: {formatDate(paymentStats.recentActivity.lastPaymentDate)}
-                </p>
-              )}
+          <div className="glass-card p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Receipt className="w-5 h-5 text-dashboard-accent2" />
+              <h4 className="text-dashboard-accent2 font-medium">Emergency Collections</h4>
             </div>
-            <div className="w-16 h-16">
-              <CircularProgressbar
-                value={emergencyPaymentPercentage}
-                text={`${emergencyPaymentPercentage}%`}
-                styles={buildStyles({
-                  textSize: '1.5rem',
-                  pathColor: '#FF9800',
-                  textColor: '#FF9800',
-                  trailColor: 'rgba(255,255,255,0.1)',
-                })}
-              />
+            
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-white">
+                  £{paymentStats.emergencyCollections.totalCollected}
+                </p>
+                <p className="text-sm text-dashboard-muted">Total collected</p>
+                <p className="text-sm text-dashboard-accent1 mt-1">
+                  {paymentStats.emergencyCollections.completed}/{paymentStats.totalMembers} members paid
+                </p>
+                {paymentStats.recentActivity.lastPaymentDate && (
+                  <p className="text-sm text-dashboard-accent2 mt-2">
+                    Last payment: {formatDate(paymentStats.recentActivity.lastPaymentDate)}
+                  </p>
+                )}
+              </div>
+              <div className="w-16 h-16">
+                <CircularProgressbar
+                  value={emergencyPaymentPercentage}
+                  text={`${emergencyPaymentPercentage}%`}
+                  styles={buildStyles({
+                    textSize: '1.5rem',
+                    pathColor: '#FF9800',
+                    textColor: '#FF9800',
+                    trailColor: 'rgba(255,255,255,0.1)',
+                  })}
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+
+      <Card className="glass-card p-6">
+        <h3 className="text-xl font-medium text-white mb-6">Additional Statistics</h3>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="glass-card p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Users className="w-5 h-5 text-blue-400" />
+              <h4 className="text-blue-400 font-medium">Membership Status</h4>
+            </div>
+            <p className="text-xl font-bold text-white">
+              {paymentStats.membershipStats.active} Active
+            </p>
+            <p className="text-sm text-dashboard-muted">
+              {paymentStats.membershipStats.inactive} Inactive
+            </p>
+          </div>
+
+          <div className="glass-card p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="w-5 h-5 text-green-400" />
+              <h4 className="text-green-400 font-medium">Recent Activity</h4>
+            </div>
+            <p className="text-xl font-bold text-white">
+              {paymentStats.recentActivity.recentPayments} Payments
+            </p>
+            <p className="text-sm text-dashboard-muted">Last 30 days</p>
+          </div>
+
+          <div className="glass-card p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="w-5 h-5 text-purple-400" />
+              <h4 className="text-purple-400 font-medium">New Members</h4>
+            </div>
+            <p className="text-xl font-bold text-white">
+              {paymentStats.membershipStats.newMembers}
+            </p>
+            <p className="text-sm text-dashboard-muted">Last 30 days</p>
+          </div>
+        </div>
+      </Card>
+    </div>
   );
 };
 
