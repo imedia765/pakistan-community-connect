@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import { Loader2, Receipt, CreditCard } from "lucide-react";
+import { Loader2, Receipt, CreditCard, PoundSterling, Calendar } from "lucide-react";
 import { formatDate } from "@/lib/dateFormat";
 
 interface PaymentSummaryProps {
@@ -18,9 +18,17 @@ const CollectorPaymentSummary = ({ collectorName }: PaymentSummaryProps) => {
       
       console.log('Fetching payment stats for collector:', collectorName);
       
+      // Fetch members data
       const { data: members, error } = await supabase
         .from('members')
-        .select('yearly_payment_status, emergency_collection_status')
+        .select(`
+          yearly_payment_status,
+          emergency_collection_status,
+          yearly_payment_amount,
+          emergency_collection_amount,
+          yearly_payment_due_date,
+          payment_date
+        `)
         .eq('collector', collectorName);
       
       if (error) {
@@ -28,15 +36,36 @@ const CollectorPaymentSummary = ({ collectorName }: PaymentSummaryProps) => {
         throw error;
       }
 
+      // Calculate payment statistics
       const stats = {
         totalMembers: members?.length || 0,
         yearlyPayments: {
           completed: members?.filter(m => m.yearly_payment_status === 'completed').length || 0,
           pending: members?.filter(m => m.yearly_payment_status === 'pending').length || 0,
+          totalCollected: members?.reduce((sum, m) => 
+            m.yearly_payment_status === 'completed' ? sum + (m.yearly_payment_amount || 40) : sum, 0
+          ) || 0,
+          nextDueDate: members?.reduce((earliest, m) => {
+            if (!m.yearly_payment_due_date) return earliest;
+            return !earliest || new Date(m.yearly_payment_due_date) < new Date(earliest)
+              ? m.yearly_payment_due_date
+              : earliest;
+          }, null as string | null),
         },
         emergencyCollections: {
           completed: members?.filter(m => m.emergency_collection_status === 'completed').length || 0,
           pending: members?.filter(m => m.emergency_collection_status === 'pending').length || 0,
+          totalCollected: members?.reduce((sum, m) => 
+            m.emergency_collection_status === 'completed' ? sum + (m.emergency_collection_amount || 0) : sum, 0
+          ) || 0,
+        },
+        recentActivity: {
+          lastPaymentDate: members?.reduce((latest, m) => {
+            if (!m.payment_date) return latest;
+            return !latest || new Date(m.payment_date) > new Date(latest)
+              ? m.payment_date
+              : latest;
+          }, null as string | null),
         }
       };
 
@@ -65,7 +94,7 @@ const CollectorPaymentSummary = ({ collectorName }: PaymentSummaryProps) => {
   );
 
   const totalYearlyAmount = paymentStats.totalMembers * 40;
-  const collectedYearlyAmount = paymentStats.yearlyPayments.completed * 40;
+  const collectedYearlyAmount = paymentStats.yearlyPayments.totalCollected;
   const remainingMembers = paymentStats.totalMembers - paymentStats.yearlyPayments.completed;
 
   return (
@@ -88,6 +117,11 @@ const CollectorPaymentSummary = ({ collectorName }: PaymentSummaryProps) => {
               <p className="text-sm text-dashboard-warning font-medium mt-1">
                 {remainingMembers} {remainingMembers === 1 ? 'member' : 'members'} remaining
               </p>
+              {paymentStats.yearlyPayments.nextDueDate && (
+                <p className="text-sm text-dashboard-accent2 mt-2">
+                  Next due: {formatDate(paymentStats.yearlyPayments.nextDueDate)}
+                </p>
+              )}
             </div>
             <div className="w-16 h-16">
               <CircularProgressbar
@@ -113,9 +147,17 @@ const CollectorPaymentSummary = ({ collectorName }: PaymentSummaryProps) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold text-white">
-                {paymentStats.emergencyCollections.completed}/{paymentStats.totalMembers}
+                £{paymentStats.emergencyCollections.totalCollected}
               </p>
-              <p className="text-sm text-dashboard-muted">Members paid</p>
+              <p className="text-sm text-dashboard-muted">Total collected</p>
+              <p className="text-sm text-dashboard-accent1 mt-1">
+                {paymentStats.emergencyCollections.completed}/{paymentStats.totalMembers} members paid
+              </p>
+              {paymentStats.recentActivity.lastPaymentDate && (
+                <p className="text-sm text-dashboard-accent2 mt-2">
+                  Last payment: {formatDate(paymentStats.recentActivity.lastPaymentDate)}
+                </p>
+              )}
             </div>
             <div className="w-16 h-16">
               <CircularProgressbar
