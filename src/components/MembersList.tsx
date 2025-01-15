@@ -9,7 +9,7 @@ import { Member } from "@/types/member";
 import { useToast } from "@/components/ui/use-toast";
 import MembersListHeader from './members/MembersListHeader';
 import MembersListContent from './members/MembersListContent';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DashboardTabs, DashboardTabsList, DashboardTabsTrigger, DashboardTabsContent } from "@/components/ui/dashboard-tabs";
 
 interface MembersListProps {
   searchTerm: string;
@@ -125,33 +125,40 @@ const MembersList = ({ searchTerm, userRole }: MembersListProps) => {
         members={members}
       />
 
-      <Tabs defaultValue="members" className="w-full">
-        <TabsList className="w-full bg-dashboard-card border-b border-dashboard-cardBorder">
-          <TabsTrigger 
-            value="members"
-            className="flex-1 data-[state=active]:bg-dashboard-accent1 data-[state=active]:text-white"
-          >
-            Members List
-          </TabsTrigger>
+      <DashboardTabs defaultValue="summary" className="w-full">
+        <DashboardTabsList className="w-full grid grid-cols-1 sm:grid-cols-3 gap-0">
           {userRole === 'collector' && (
             <>
-              <TabsTrigger 
-                value="payments"
-                className="flex-1 data-[state=active]:bg-dashboard-accent1 data-[state=active]:text-white"
-              >
-                Payments
-              </TabsTrigger>
-              <TabsTrigger 
-                value="summary"
-                className="flex-1 data-[state=active]:bg-dashboard-accent1 data-[state=active]:text-white"
-              >
+              <DashboardTabsTrigger value="summary" className="w-full">
                 Summary
-              </TabsTrigger>
+              </DashboardTabsTrigger>
+              <DashboardTabsTrigger value="payments" className="w-full">
+                Payments
+              </DashboardTabsTrigger>
             </>
           )}
-        </TabsList>
+          <DashboardTabsTrigger value="members" className="w-full">
+            Members List
+          </DashboardTabsTrigger>
+        </DashboardTabsList>
 
-        <TabsContent value="members" className="mt-6">
+        {userRole === 'collector' && collectorInfo && (
+          <>
+            <DashboardTabsContent value="summary">
+              <div className="overflow-hidden">
+                <CollectorPaymentSummary collectorName={collectorInfo.name} />
+              </div>
+            </DashboardTabsContent>
+
+            <DashboardTabsContent value="payments">
+              <div className="overflow-hidden">
+                <CollectorMemberPayments collectorName={collectorInfo.name} />
+              </div>
+            </DashboardTabsContent>
+          </>
+        )}
+
+        <DashboardTabsContent value="members">
           <div className="overflow-hidden">
             <MembersListContent
               members={members}
@@ -164,24 +171,8 @@ const MembersList = ({ searchTerm, userRole }: MembersListProps) => {
               onPageChange={setPage}
             />
           </div>
-        </TabsContent>
-
-        {userRole === 'collector' && collectorInfo && (
-          <>
-            <TabsContent value="payments" className="mt-6">
-              <div className="overflow-hidden">
-                <CollectorMemberPayments collectorName={collectorInfo.name} />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="summary" className="mt-6">
-              <div className="overflow-hidden">
-                <CollectorPaymentSummary collectorName={collectorInfo.name} />
-              </div>
-            </TabsContent>
-          </>
-        )}
-      </Tabs>
+        </DashboardTabsContent>
+      </DashboardTabs>
 
       {selectedMember && isPaymentDialogOpen && (
         <PaymentDialog
